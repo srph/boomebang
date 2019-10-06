@@ -1,0 +1,30 @@
+{
+  "name": "boomebang",
+  "version": "1.0.0",
+  "description": "Instagram Boomerang for the web.",
+  "main": "src/index.tsx",
+  "scripts": {
+    "start": "parcel src/index.html --no-cache",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && parcel build src/index.html"
+  },
+  "keywords": [
+    "instagram",
+    "boomerang"
+  ],
+  "author": "Kier Borromeo <seraphipod@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^12.6.9",
+    "@types/react": "^16.8.24",
+    "@types/react-dom": "^16.8.5",
+    "parcel-bundler": "^1.12.3",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "classnames": "^2.2.6",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "sanitize.css": "^11.0.0"
+  }
+}
