@@ -25,6 +25,8 @@
     "classnames": "^2.2.6",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
+    "react-draggable": "^4.0.3",
+    "react-resizer": "^0.1.2",
     "sanitize.css": "^11.0.0"
   }
 }
