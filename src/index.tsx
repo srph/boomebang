@@ -26,33 +26,88 @@ const c = {
 function VideoSlider(props: VideoSliderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const windowRef = useRef<HTMLDivElement>(null)
+  const initialWidthFromDuration = useRef<number>(0)
 
   const glassDraggableProps = useDraggable({
     ref: windowRef,
     containerRef: containerRef,
     onDragMove(evt, data) {
-      const start = getStartPosition(evt, data)
+      const start = getStartValueFromPosition(evt, data)
       props.onChangeStart(start)
     }
   })
 
-  function getStartPosition(evt, data) {
-    const position = data.start + data.movement
-    // console.log(data.start, data.movement)
+  const rightHandleDraggableProps = useDraggable({
+    ref: windowRef,
+    containerRef: containerRef,
+    onDragStart(evt) {
+      initialWidthFromDuration.current = getWindowWidthFromDurationValue(props.duration)
+      console.log('init', getWindowWidthFromDurationValue(props.duration))
+    },
+    onDragMove(evt, data) {
+      const duration = getDurationFromPosition(evt, data)
+      console.log('duration', duration)
+      props.onChangeDuration(duration)
+    }
+  })
 
-    // If overbounds to the left
-    if (position <= 0) {
+  // const leftHandleDraggableProps = useDraggable({
+  //   ref: windowRef,
+  //   containerRef: containerRef,
+  //   onDragMove(evt, data) {
+  //     const start = getStartValueFromPosition(evt, data)
+  //     const duration = getDurationFromPosition(evt, data)
+  //     props.onChangeStart(start)
+  //     props.onChangeDuration(duration)
+  //   }
+  // })
+
+  // function getDurationFromPosition(evt, data) {
+  //   const left = data.start + data.movement
+
+  //   if ()
+  // }
+
+  function getDurationFromPosition(evt, data) {
+    const width = initialWidthFromDuration.current + data.movement
+
+    // console.log(isOverbounds(data.start, width), initialWidthFromDuration, data.movement)
+
+    if (isOverbounds(data.start, width)) {
+      return getMaxDurationValue(data.start)
+    }
+
+    return (width / c.CONTAINER_WIDTH) * props.video.duration
+  }
+
+  function getStartValueFromPosition(evt, data) {
+    const left = data.start + data.movement
+
+    // If we're exiting the container to the left
+    if (left <= 0) {
       return 0
     }
 
     const width = getWindowWidthFromDurationValue(props.duration)
 
-    // If overbounds, we'll keep it there
-    if (position + width >= c.CONTAINER_WIDTH) {
-      return (c.CONTAINER_WIDTH - width) / c.CONTAINER_WIDTH * props.video.duration
+    // If we're exiting the container to the right
+    if (isOverbounds(left, width)) {
+      return getMaxStartValue(width)
     }
 
-    return (position / c.CONTAINER_WIDTH) * props.video.duration
+    return (left / c.CONTAINER_WIDTH) * props.video.duration
+  }
+
+  function getMaxDurationValue(left: number) {
+    return ((c.CONTAINER_WIDTH - left) / c.CONTAINER_WIDTH) * props.video.duration
+  }
+
+  function getMaxStartValue(width: number) {
+    return ((c.CONTAINER_WIDTH - width) / c.CONTAINER_WIDTH) * props.video.duration
+  }
+
+  function isOverbounds(left: number, width: number) {
+    return left + width >= c.CONTAINER_WIDTH
   }
 
   function getWindowWidthFromDurationValue(duration: number) {
@@ -67,29 +122,33 @@ function VideoSlider(props: VideoSliderProps) {
   const width = getWindowWidthFromDurationValue(props.duration)
 
   return (
-    <div className="video-slider" ref={containerRef}>
-      <div className="previews">
-        <div className="frame"></div>
+    <React.Fragment>
+      <div className="video-slider" ref={containerRef}>
+        <div className="previews">
+          <div className="frame"></div>
+        </div>
+
+        <div className="bg"></div>
+
+        <div
+          ref={windowRef}
+          className="window"
+          style={{
+            width,
+            transform: `translateX(${offset}px)`
+          }}>
+          <div className="handle is-left">
+            <div className="line"></div>
+          </div>
+          <div {...glassDraggableProps} className="glass"></div>
+          <div {...rightHandleDraggableProps} className="handle is-right">
+            <div className="line"></div>
+          </div>
+        </div>
       </div>
 
-      <div className="bg"></div>
-
-      <div
-        ref={windowRef}
-        className="window"
-        style={{
-          width,
-          transform: `translateX(${offset}px)`
-        }}>
-        <div className="handle is-left">
-          <div className="line"></div>
-        </div>
-        <div {...glassDraggableProps} className="glass"></div>
-        <div className="handle is-right">
-          <div className="line"></div>
-        </div>
-      </div>
-    </div>
+      <pre>{JSON.stringify({ start: props.start, duration: props.duration })}</pre>
+    </React.Fragment>
   )
 }
 
