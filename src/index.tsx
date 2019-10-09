@@ -65,6 +65,7 @@ function VideoSlider(props: VideoSliderProps) {
       isLeftHandleUnderbounds.current = false
     },
     onDragMove(evt, data) {
+      // @TODO Cannot go further than `initialLeftPosition`
       const start = getStartValueFromMovement(evt, data)
       const left = getWindowOffsetFromStartValue(start)
       const width = (initialRightPosition.current - left)
