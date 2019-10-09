@@ -28,6 +28,8 @@ function VideoSlider(props: VideoSliderProps) {
   const windowRef = useRef<HTMLDivElement>(null)
 
   const glassDraggableProps = useDraggable({
+    ref: windowRef,
+    containerRef: containerRef,
     onDragMove(evt, data) {
       const start = getStartPosition(evt, data)
       props.onChangeStart(start)
@@ -35,29 +37,34 @@ function VideoSlider(props: VideoSliderProps) {
   })
 
   function getStartPosition(evt, data) {
-    const box = containerRef.current.getBoundingClientRect()
-    const position = data.movement - box.left
+    const position = data.start + data.movement
+    // console.log(data.start, data.movement)
 
+    // If overbounds to the left
     if (position <= 0) {
       return 0
     }
-    
+
+    const width = getWindowWidthFromDurationValue(props.duration)
+
+    // If overbounds, we'll keep it there
+    if (position + width >= c.CONTAINER_WIDTH) {
+      return (c.CONTAINER_WIDTH - width) / c.CONTAINER_WIDTH * props.video.duration
+    }
+
     return (position / c.CONTAINER_WIDTH) * props.video.duration
   }
 
-  function getStartValueFromOffset(movement: number) {
-    const box = containerRef.current.getBoundingClientRect()
-    const position = data.movement - box.left
+  function getWindowWidthFromDurationValue(duration: number) {
+    return ((duration + props.start) / props.video.duration) * c.CONTAINER_WIDTH - offset
   }
 
-  function getOffsetFromValue() {
-    return (props.start / props.video.duration) * c.CONTAINER_WIDTH
+  function getWindowOffsetFromStartValue(start: number) {
+    return (start / props.video.duration) * c.CONTAINER_WIDTH
   }
 
-  console.log('here 2')
-
-  const offset = (props.start / props.video.duration) * c.CONTAINER_WIDTH
-  const width = (((props.duration + props.start) / props.video.duration) * c.CONTAINER_WIDTH - offset)
+  const offset = getWindowOffsetFromStartValue(props.start)
+  const width = getWindowWidthFromDurationValue(props.duration)
 
   return (
     <div className="video-slider" ref={containerRef}>

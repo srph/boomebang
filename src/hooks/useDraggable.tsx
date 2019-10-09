@@ -3,19 +3,23 @@ import { useRef, useEffect } from 'react'
 import { on } from '~/utils/dom'
 
 interface DragData {
+  start: number
   movement: number
 }
 
 interface Props {
-  onDragStart?: (evt: MouseEvent<HTMLElement>) => void
-  onDragMove?: (evt: MouseEvent<HTMLElement>, data: DragData) => void
-  onDragEnd?: (evt: MouseEvent<HTMLElement>) => void
+  ref: React.RefObject<HTMLDivElement>
+  containerRef: React.RefObject<HTMLDivElement>
+  onDragStart?: (evt: MouseEvent) => void
+  onDragMove?: (evt: MouseEvent, data: DragData) => void
+  onDragEnd?: (evt: MouseEvent) => void
 }
 
 function useDraggable(props: Props) {
   const dragStartRef = useRef(() => {})
   const dragEndRef = useRef(() => {})
-  const startingPosition = useRef(0)
+  const startingMousePosition = useRef(0)
+  const startingElementPosition = useRef(0)
 
   useEffect(() => {
     return () => {
@@ -25,7 +29,10 @@ function useDraggable(props: Props) {
   }, [])
 
   function handleDragStart(evt) {
-    startingPosition.current = evt.clientX
+    startingMousePosition.current = evt.clientX
+    const box = props.ref.current.getBoundingClientRect()
+    const container = props.containerRef.current.getBoundingClientRect()
+    startingElementPosition.current = box.left - container.left
     props.onDragStart && props.onDragStart(evt)
     dragStartRef.current = on(document, 'mousemove', handleDragMove)
     dragEndRef.current = on(document, 'mouseup', handleDragEnd)
@@ -33,7 +40,8 @@ function useDraggable(props: Props) {
 
   function handleDragMove(evt) {
     props.onDragMove && props.onDragMove(evt, {
-      movement: evt.clientX - startingPosition.current
+      start: startingElementPosition.current,
+      movement: evt.clientX - startingMousePosition.current
     })
   }
 
