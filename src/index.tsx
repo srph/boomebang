@@ -27,12 +27,16 @@ function VideoSlider(props: VideoSliderProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const windowRef = useRef<HTMLDivElement>(null)
   const initialWidthFromDuration = useRef<number>(0)
+  const initialLeftPosition = useRef<number>(0)
+  const initialRightPosition = useRef<number>(0)
+  const isLeftHandleUnderbounds = useRef<boolean>(false)
+  const lastStartPosition = useRef<number>(0)
 
   const glassDraggableProps = useDraggable({
     ref: windowRef,
     containerRef: containerRef,
     onDragMove(evt, data) {
-      const start = getStartValueFromPosition(evt, data)
+      const start = getStartValueFromMovement(evt, data)
       props.onChangeStart(start)
     }
   })
@@ -42,36 +46,36 @@ function VideoSlider(props: VideoSliderProps) {
     containerRef: containerRef,
     onDragStart(evt) {
       initialWidthFromDuration.current = getWindowWidthFromDurationValue(props.duration)
-      console.log('init', getWindowWidthFromDurationValue(props.duration))
     },
     onDragMove(evt, data) {
-      const duration = getDurationFromPosition(evt, data)
-      console.log('duration', duration)
+      const duration = getDurationFromMovement(evt, data)
       props.onChangeDuration(duration)
     }
   })
 
-  // const leftHandleDraggableProps = useDraggable({
-  //   ref: windowRef,
-  //   containerRef: containerRef,
-  //   onDragMove(evt, data) {
-  //     const start = getStartValueFromPosition(evt, data)
-  //     const duration = getDurationFromPosition(evt, data)
-  //     props.onChangeStart(start)
-  //     props.onChangeDuration(duration)
-  //   }
-  // })
+  const leftHandleDraggableProps = useDraggable({
+    ref: windowRef,
+    containerRef: containerRef,
+    onDragStart(evt) {
+      const left = getWindowOffsetFromStartValue(props.start)
+      const width = getWindowWidthFromDurationValue(props.duration)
+      initialLeftPosition.current = left
+      initialRightPosition.current = left + width
+      initialWidthFromDuration.current = width
+      isLeftHandleUnderbounds.current = false
+    },
+    onDragMove(evt, data) {
+      const start = getStartValueFromMovement(evt, data)
+      const left = getWindowOffsetFromStartValue(start)
+      const width = (initialRightPosition.current - left)
+      const duration = getDurationFromWidth(width)
+      props.onChangeStart(start)
+      props.onChangeDuration(duration)
+    }
+  })
 
-  // function getDurationFromPosition(evt, data) {
-  //   const left = data.start + data.movement
-
-  //   if ()
-  // }
-
-  function getDurationFromPosition(evt, data) {
+  function getDurationFromMovement(evt, data) {
     const width = initialWidthFromDuration.current + data.movement
-
-    // console.log(isOverbounds(data.start, width), initialWidthFromDuration, data.movement)
 
     if (isOverbounds(data.start, width)) {
       return getMaxDurationValue(data.start)
@@ -80,7 +84,7 @@ function VideoSlider(props: VideoSliderProps) {
     return (width / c.CONTAINER_WIDTH) * props.video.duration
   }
 
-  function getStartValueFromPosition(evt, data) {
+  function getStartValueFromMovement(evt, data) {
     const left = data.start + data.movement
 
     // If we're exiting the container to the left
@@ -96,6 +100,10 @@ function VideoSlider(props: VideoSliderProps) {
     }
 
     return (left / c.CONTAINER_WIDTH) * props.video.duration
+  }
+
+  function getDurationFromWidth(width: number) {
+    return (width / c.CONTAINER_WIDTH) * props.video.duration
   }
 
   function getMaxDurationValue(left: number) {
@@ -137,7 +145,7 @@ function VideoSlider(props: VideoSliderProps) {
             width,
             transform: `translateX(${offset}px)`
           }}>
-          <div className="handle is-left">
+          <div {...leftHandleDraggableProps} className="handle is-left">
             <div className="line"></div>
           </div>
           <div {...glassDraggableProps} className="glass"></div>
